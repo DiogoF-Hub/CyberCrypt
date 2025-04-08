@@ -1,30 +1,28 @@
-import os
-from salt_management import generate_salt
 from Crypto.Random import get_random_bytes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from argon2.low_level import hash_secret_raw, Type
 from cryptography.hazmat.primitives import hashes
 
+from Backend.salt_management import generate_salt
 
-def generate_aes_key(key_size=32):
+
+def generate_aes_key():
     """
     Generates a secure AES key of specified size (default 32 bytes for AES-256).
     """
-
-    if key_size not in [16, 32]:
-        raise ValueError(
-            "Invalid key size! Use 16 bytes for AES-128 or 32 bytes for AES-256."
-        )
+    key_size = 32  # AES-256
 
     aes_key = get_random_bytes(key_size)  # Secure random key
-    return aes_key.hex()
+    return aes_key
 
 
-def derive_key_from_password(password, method, use_salt, salt_length):
+def derive_key_from_password(
+    password: str, method: str, use_salt: bool, salt_length: int
+):
     """
     Derives a secure AES key from a password using the specified method and the use of salt and salt length.
     """
-
+    method = method.lower()  # Normalize method to lowercase
     if method not in ["pbkdf2", "argon2"]:
         raise ValueError("Invalid method! Use 'pbkdf2' or 'argon2'.")
 
@@ -48,7 +46,7 @@ def derive_key_from_password(password, method, use_salt, salt_length):
             salt=salt,
             iterations=100000,
         )
-        aes_key = kdf.derive(password_bytes).hex()
+        aes_key = kdf.derive(password_bytes)
     elif method == "argon2":
         # Use Argon2 with configurable parameters
         aes_key = hash_secret_raw(
@@ -59,6 +57,6 @@ def derive_key_from_password(password, method, use_salt, salt_length):
             parallelism=8,
             hash_len=32,
             type=Type.ID,  # Use Argon2id
-        ).hex()
+        )
 
-    return aes_key, salt.hex()
+    return aes_key, salt

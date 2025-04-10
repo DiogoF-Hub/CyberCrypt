@@ -1,5 +1,6 @@
 import os
-from Backend.encryption import encrypt_with_password
+from Backend.encryption import encrypt_with_password, encrypt_with_random_key
+from Backend.decryption import decrypt_file
 
 project_root = os.path.dirname(os.path.abspath(__file__))
 uploads_dir = os.path.join(project_root, "Uploads")
@@ -12,13 +13,20 @@ def start():
 
 
 start()
-filepath = os.path.join(uploads_dir, "exiftool-13.26_64.zip")
-public_key_path = os.path.join(project_root, "Uploads", "public_key.pem")
+
+
 encrypt_with_password(
-    filepath,
+    "test.txt",
     "password123",
     "PBKDF2",
     True,
     16,
-    public_key_path,
+    "public_key.pem",
+)
+
+
+decrypt_file(
+    "test.txt_encrypted.bin",
+    "private_key.pem",
+    "aes_key_encrypted.bin",
 )

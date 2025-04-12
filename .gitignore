@@ -3,8 +3,11 @@ __pycache__/
 
 private_key.pem
 public_key.pem
+public_key*.pem
+public_key_*.pem
 aes_key_encrypted.bin
 encrypted_data.bin
 test.txt_encrypted.bin
 test.txt
+test*.txt
 exiftool-13.26_64.zip

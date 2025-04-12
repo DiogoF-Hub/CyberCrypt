@@ -6,10 +6,7 @@ import os
 from Backend.aes_key_generation import derive_key_from_password, generate_aes_key
 from Backend.iv_management import generate_iv
 from Backend.rsa_key_management import load_public_key
-
-root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
-uploads_dir = os.path.join(root_dir, "Uploads")
-downloads_dir = os.path.join(root_dir, "Downloads")
+from Backend.vars import uploads_dir, downloads_dir
 
 
 def encrypt_aes_key_and_save(aes_key: bytes, salt: bytes, rsa_public_key_path: str):

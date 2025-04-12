@@ -3,15 +3,8 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 from typing import Optional
 import os
-from Backend.rsa_key_management import load_private_key
-
-
-root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
-uploads_dir = os.path.join(root_dir, "Uploads")
-downloads_dir = os.path.join(root_dir, "Downloads")
-
-# RSA key size in bytes
-allowed_sizes = [2048, 3072, 4096]
+from Backend.rsa_key_management import load_private_key, validate_rsa_key_size
+from Backend.vars import uploads_dir, downloads_dir
 
 
 def decrypt_file(
@@ -31,10 +24,8 @@ def decrypt_file(
         key_size_bits = private_key.key_size
 
         # Check if the key size is supported
-        if key_size_bits not in allowed_sizes:
-            raise ValueError(
-                f"Unsupported RSA key size: {key_size_bits} bits. Allowed: {allowed_sizes}"
-            )
+        if validate_rsa_key_size(key_size_bits) == False:
+            raise ValueError(f"Unsupported RSA key size: {key_size_bits} bits.")
 
         # Convert to bytes
         key_size_bytes = key_size_bits // 8

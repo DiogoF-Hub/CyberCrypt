@@ -4,6 +4,7 @@ from argon2.low_level import hash_secret_raw, Type
 from cryptography.hazmat.primitives import hashes
 
 from Backend.salt_management import generate_salt
+from Backend.vars import kdf_choices
 
 
 def generate_aes_key():
@@ -19,11 +20,8 @@ def generate_aes_key():
 def derive_key_from_password(
     password: str, method: str, use_salt: bool, salt_length: int
 ):
-    """
-    Derives a secure AES key from a password using the specified method and the use of salt and salt length.
-    """
     method = method.lower()  # Normalize method to lowercase
-    if method not in ["pbkdf2", "argon2"]:
+    if method not in kdf_choices:
         raise ValueError("Invalid method! Use 'pbkdf2' or 'argon2'.")
 
     # Argon2 requires a salt length of at least 16
@@ -47,7 +45,7 @@ def derive_key_from_password(
             iterations=100000,
         )
         aes_key = kdf.derive(password_bytes)
-    elif method == "argon2":
+    elif method == "argon2id":
         # Use Argon2 with configurable parameters
         aes_key = hash_secret_raw(
             password_bytes,

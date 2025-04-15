@@ -7,3 +7,6 @@ public_keys_dir = os.path.join(root_dir, "Public-Keys")
 
 # RSA key size in bytes
 allowed_sizes = [2048, 3072, 4096]
+
+# KDF choices for password-based encryption
+kdf_choices = ["argon2id", "pbkdf2"]

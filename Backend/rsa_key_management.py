@@ -1,4 +1,7 @@
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.serialization import load_pem_private_key
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
+from cryptography.exceptions import UnsupportedAlgorithm
 from typing import Optional
 import os
 
@@ -6,25 +9,41 @@ from Backend.vars import public_keys_dir, allowed_sizes
 
 
 def load_private_key(private_key_path: str, passphrase: Optional[str] = None):
-    # 1. Handle optional passphrase
     if passphrase:
         passphrase = passphrase.encode()
     else:
         passphrase = None
 
-    # 2. Load and return the private key object
     with open(private_key_path, "rb") as key_file:
-        private_key = serialization.load_pem_private_key(
-            key_file.read(), password=passphrase
-        )
+        key_data = key_file.read()
+
+    try:
+        private_key = serialization.load_pem_private_key(key_data, password=passphrase)
+    except ValueError as e:
+        raise ValueError(
+            "❌ Incorrect passphrase or invalid private key format."
+        ) from e
+    except UnsupportedAlgorithm as e:
+        raise ValueError("❌ Unsupported encryption algorithm or key type.") from e
+
+    if not isinstance(private_key, RSAPrivateKey):
+        raise ValueError("❌ The provided key is not an RSA private key.")
 
     return private_key
 
 
-def load_public_key(rsa_public_key_path: str):
-    # Load RSA public key from PEM file
-    with open(rsa_public_key_path, "rb") as key_file:
-        public_key = serialization.load_pem_public_key(key_file.read())
+def load_public_key(public_key_path: str):
+    try:
+        with open(public_key_path, "rb") as key_file:
+            key_data = key_file.read()
+        public_key = serialization.load_pem_public_key(key_data)
+    except ValueError as e:
+        raise ValueError("❌ Invalid public key format.") from e
+    except UnsupportedAlgorithm as e:
+        raise ValueError("❌ Unsupported key algorithm.") from e
+
+    if not isinstance(public_key, RSAPublicKey):
+        raise ValueError("❌ The provided key is not an RSA public key.")
 
     return public_key
 
@@ -87,40 +106,36 @@ def write_rsa_public_key(rsa_key_name: str, uploaded_key: bytes):
 
 def is_rsa_private_key(pem_bytes: bytes) -> bool:
     try:
-        # Decode bytes to string (assuming UTF-8 PEM format)
-        pem_text = pem_bytes.decode("utf-8")
-
-        # Check for common RSA private key headers
-        private_headers = [
-            "-----BEGIN RSA PRIVATE KEY-----",
-            "-----BEGIN PRIVATE KEY-----",
-        ]
-
-        # Check if any known private header is present in the PEM
-        for header in private_headers:
-            if header in pem_text:
-                return True
-
-        return False  # No private key headers found
-
-    except UnicodeDecodeError:
-        # File is not valid UTF-8 (e.g., binary file)
+        # Try loading without a password (unencrypted key)
+        key = load_pem_private_key(pem_bytes, password=None)
+        return isinstance(key, RSAPrivateKey)
+    except TypeError:
+        # Encrypted private key; can't be loaded without password
+        return True
+    except ValueError as e:
+        # Still might be an encrypted key with unsupported encryption
+        if "bad decrypt" in str(e).lower() or "incorrect password" in str(e).lower():
+            return True
+        return False
+    except UnsupportedAlgorithm:
+        return False
+    except Exception:
         return False
 
 
 def is_rsa_public_key(pem_bytes: bytes) -> bool:
     try:
-        # Decode PEM bytes to UTF-8 text
-        pem_text = pem_bytes.decode("utf-8")
-
-        # Look for common public key PEM headers
-        public_headers = [
-            "-----BEGIN PUBLIC KEY-----",
-            "-----BEGIN RSA PUBLIC KEY-----",
-        ]
-
-        # Check if any of the public headers are found
-        return any(header in pem_text for header in public_headers)
-
-    except UnicodeDecodeError:
+        key = serialization.load_pem_public_key(pem_bytes)
+        return isinstance(key, RSAPublicKey)
+    except Exception:
         return False
+
+
+def is_private_key_encrypted(private_key_bytes: bytes) -> bool:
+    try:
+        serialization.load_pem_private_key(private_key_bytes, password=None)
+        return False  # Loaded successfully without a passphrase
+    except TypeError:
+        return True  # Raised because a passphrase is required
+    except Exception:
+        return False  # Other errors = likely not encrypted, but malformed

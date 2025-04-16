@@ -24,19 +24,24 @@ def derive_key_from_password(
     if method not in kdf_choices:
         raise ValueError("Invalid method! Use 'pbkdf2' or 'argon2'.")
 
-    # Argon2 requires a salt length of at least 16
-    # Above 32 bytes is not recommended
-    if salt_length < 16 or salt_length > 32:
-        raise ValueError("Invalid salt length! Use a value between 16 and 32 bytes.")
-
-    # argon2 requires salt, pbkdf2 does not
-    if not use_salt and method == "pbkdf2":
+    # 1. Validate and generate salt
+    if use_salt:
+        if salt_length is None:
+            raise ValueError("Salt length is required when use_salt is True.")
+        if salt_length < 16 or salt_length > 32:
+            raise ValueError(
+                "Invalid salt length! Use a value between 16 and 32 bytes."
+            )
+        salt = generate_salt(salt_length)
+    elif method == "pbkdf2":
         salt = b""
     else:
-        salt = generate_salt(salt_length)
+        salt = None  # Should not happen, Argon2 always requires salt
 
-    password_bytes = password.encode()  # Convert password to bytes
+    # 2. Encode password
+    password_bytes = password.encode()
 
+    # 3. Derive key
     if method == "pbkdf2":
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
@@ -46,7 +51,6 @@ def derive_key_from_password(
         )
         aes_key = kdf.derive(password_bytes)
     elif method == "argon2id":
-        # Use Argon2 with configurable parameters
         aes_key = hash_secret_raw(
             password_bytes,
             salt,

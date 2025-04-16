@@ -38,7 +38,7 @@ def encrypt_with_password(
     method: str,
     use_salt: bool,
     salt_length: int,
-    rsa_public_key: str,
+    rsa_public_key_path: str,
 ):
     # 1. Derive AES key from password
     aes_key, salt = derive_key_from_password(password, method, use_salt, salt_length)
@@ -78,7 +78,6 @@ def encrypt_with_password(
         f.write(ciphertext)  # encrypted content
 
     # 7. Encrypt AES key with RSA & save + salt
-    rsa_public_key_path = os.path.join(uploads_dir, rsa_public_key)
     encrypt_aes_key_and_save(aes_key, salt, rsa_public_key_path)
 
 

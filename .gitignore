@@ -1,7 +1,7 @@
 venv/
 __pycache__/
 
-
+test.py
 *.pem
 *.bin
 *.txt

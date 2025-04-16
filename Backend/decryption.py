@@ -66,3 +66,4 @@ def decrypt_file(
         f.write(plaintext)
 
     print(f"Decryption complete: {original_filename}")
+    return original_filename_path

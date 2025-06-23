@@ -41,14 +41,16 @@ if "upload_handled" not in st.session_state:
 # 3. Upload key file using a dynamic key
 uploaded_key = st.file_uploader(
     "Upload RSA Public Key:",
-    type=["pem"],
+    type=["pem", "key"],
     key=f"uploader_{st.session_state.uploader_key}",
 )
 
 # 4. Process and store the uploaded key
 if uploaded_key is not None and not st.session_state.upload_handled:
-    if not uploaded_key.name.endswith(".pem"):
-        st.warning("Only .pem files are allowed.")
+    if not uploaded_key.name.endswith(".pem") and not uploaded_key.name.endswith(
+        ".key"
+    ):
+        st.warning("Only .pem and .key files are allowed.")
     else:
         pem_data = bytes(uploaded_key.getbuffer())
         if not is_rsa_public_key(pem_data):
@@ -81,7 +83,7 @@ st.subheader("📋 Stored Public Keys")
 
 stored_keys = []
 for filename in os.listdir(public_keys_dir):
-    if filename.endswith(".pem"):
+    if filename.endswith(".pem") or filename.endswith(".key"):
         full_path = os.path.join(public_keys_dir, filename)
         if os.path.isfile(full_path):
             stored_keys.append(filename)

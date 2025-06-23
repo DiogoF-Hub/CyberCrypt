@@ -3,6 +3,7 @@ __pycache__/
 
 test.py
 *.pem
+*.key
 *.bin
 *.txt
 *.zip

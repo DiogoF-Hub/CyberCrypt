@@ -48,7 +48,7 @@ with col2:
 
 with col3:
     private_key_file = st.file_uploader(
-        "RSA Private Key (.pem)", type=["pem"], key="priv_key"
+        "RSA Private Key (.pem, .key)", type=["pem", "key"], key="priv_key"
     )
 
 st.markdown("""</div>""", unsafe_allow_html=True)
